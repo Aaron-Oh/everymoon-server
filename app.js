@@ -1,42 +1,36 @@
 const express = require('express');
 const tf = require('@tensorflow/tfjs-node');
+const cors = require('cors');
 const multer = require('multer');
-const upload = multer();
+const upload = multer({ dest: 'uploads/' });
+
 const app = express();
+app.use(cors());
 
-// 모델 로딩
-const model = await tf.loadLayersModel('file://./tf_js/model.json');
+const port = process.env.PORT || 8080;
 
-// POST /predict 요청 처리
+app.get('/', (req, res) => {
+  res.send('Hello from TensorFlow.js Node.js server');
+});
+
 app.post('/predict', upload.single('image'), async (req, res) => {
   try {
-    // 요청으로부터 이미지 데이터 추출
-    const imgData = req.file.buffer;
+    const model = await tf.loadLayersModel('file://./tf_js/model.json');
 
-    // 이미지를 텐서로 변환
-    const tensor = tf.node.decodeImage(imgData);
+    const imageBuffer = req.file.buffer;
+    const decodedImage = tf.node.decodeImage(imageBuffer);
+    const castedImg = decodedImage.cast('float32');
+    const expandedImg = castedImg.expandDims(0);
+    const prediction = await model.predict(expandedImg).data();
+    const result = prediction[0] > 0.5 ? 'large' : 'medium';
 
-    // 이미지 크기 조정 및 정규화
-    const resized = tf.image.resizeBilinear(tensor, [224, 224]).div(255);
-
-    // 모델에 이미지를 입력하여 예측 수행
-    const output = model.predict(resized);
-
-    // 예측 결과 추출 및 응답 전송
-    const predictions = output.arraySync()[0];
-    const prediction = predictions.indexOf(Math.max(...predictions));
-
-    res.json({
-      result: (prediction === 0) ? 'medium' : 'large'
-    });
+    res.json({ result });
   } catch (error) {
     console.error(error);
-    res.status(500).send('Internal Server Error');
+    res.status(500).json({ error: 'Something went wrong' });
   }
 });
 
-// 서버 구동
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}...`);
+app.listen(port, () => {
+  console.log(`Server listening on port ${port}`);
 });
