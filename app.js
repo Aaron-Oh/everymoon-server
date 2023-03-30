@@ -1,34 +1,38 @@
-const tf = require('@tensorflow/tfjs-node');
 const express = require('express');
-const multer = require('multer');
-const IMAGE_SIZE = 224;
+const tf = require('@tensorflow/tfjs-node');
+const path = require('path');
 
-// 모델 로드
+const app = express();
+const port = 8080;
+
+const modelPath = path.join(__dirname, 'tf_js', 'model.json');
+
 async function loadModel() {
-    const model = await tf.loadLayersModel('file://home/g277ipjk53/everymoon/everymoon-server/tf_js/model.json');
-    return model;
+  const model = await tf.loadLayersModel(`file://${modelPath}`);
+  console.log('model loaded');
+  return model;
+}
+
+let modelPromise = null;
+
+app.get('/', async (req, res) => {
+  if (!modelPromise) {
+    modelPromise = loadModel();
   }
 
-// 서버 시작
-const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// 이미지 처리 및 예측
-const upload = multer().single('image');
-
-app.post('/predict', upload, async (req, res) => {
-  const model = await loadModel();
-  const img = tf.node.decodeImage(req.file.buffer);
-  const resized = tf.image.resizeBilinear(img, [IMAGE_SIZE, IMAGE_SIZE]);
-  const expanded = tf.expandDims(resized, 0);
-  const prediction = model.predict(expanded);
-  const result = prediction.dataSync();
-  res.json(result);
+  try {
+    const model = await modelPromise;
+    const input = tf.ones([1, 224, 224, 3]);
+    const prediction = model.predict(input);
+    const output = prediction.dataSync();
+    const result = output[0] > output[1] ? 'large' : 'medium';
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Internal Server Error');
+  }
 });
 
-// 서버 포트 열기
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}...`);
+app.listen(port, () => {
+  console.log(`Server listening on port ${port}...`);
 });
