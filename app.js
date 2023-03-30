@@ -6,8 +6,10 @@ const app = express();
 const port = 8080;
 
 // 모델 로드
-const model = await tf.loadGraphModel('file://./tf_js/model.json');
-
+async function loadModel() {
+    const model = await tf.loadGraphModel('file:./tf_js/model.json');
+    return model;
+  }
 // 이미지 처리 및 예측
 const upload = multer().single('image');
 app.post('/predict', upload, async (req, res) => {
