@@ -5,7 +5,7 @@ const IMAGE_SIZE = 224;
 
 // 모델 로드
 async function loadModel() {
-    const model = await tf.loadLayersModel('file:./tf_js/model.json');
+    const model = await tf.loadLayersModel('file://home/g277ipjk53/everymoon/everymoon-server/tf_js/model.json');
     return model;
   }
 
