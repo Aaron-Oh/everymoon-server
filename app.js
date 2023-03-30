@@ -1,7 +1,7 @@
 const tf = require('@tensorflow/tfjs-node');
 const express = require('express');
 const multer = require('multer');
-const IMAGE_SIZE = 256;
+const IMAGE_SIZE = 224;
 
 // 모델 로드
 async function loadModel() {
