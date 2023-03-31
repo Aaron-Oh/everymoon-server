@@ -24,6 +24,8 @@ async function resizeImage(buffer, width, height) {
 
 app.post('/predict', upload.single('image'), async (req, res) => {
   try {
+    // 요청에 대한 정보를 로그로 출력
+    console.log('Received POST request at /predict with image:', req.file.originalname);
     const model = await tf.loadGraphModel('file://./tf_js/model.json');
 
     const imageBuffer = await resizeImage(req.file.buffer, 224, 224);
