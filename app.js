@@ -1,8 +1,9 @@
 const express = require('express');
-const tf = require('@tensorflow/tfjs-node');
 const cors = require('cors');
 const multer = require('multer');
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({ storage: multer.memoryStorage() });
+const tf = require('@tensorflow/tfjs-node');
+const sharp = require('sharp');
 
 const app = express();
 app.use(cors());
@@ -14,12 +15,9 @@ app.get('/', (req, res) => {
 });
 
 async function resizeImage(buffer, width, height) {
-  const decodedImage = tf.node.decodeImage(buffer);
-  const resizedImage = tf.image.resizeBilinear(decodedImage, [width, height]);
-  const castedImg = resizedImage.cast('float32');
-  const expandedImg = castedImg.expandDims(0);
-  const imgData = await expandedImg.data();
-  return Buffer.from(imgData);
+  const tfimage = tf.node.decodeImage(buffer);
+  const tfresized = tf.image.resizeBilinear(tfimage, [width, height]);
+  return tfresized;
 }
 
 app.post('/predict', upload.single('image'), async (req, res) => {
@@ -27,9 +25,15 @@ app.post('/predict', upload.single('image'), async (req, res) => {
     // 요청에 대한 정보를 로그로 출력
     console.log('Received POST request at /predict with image:', req.file.originalname);
 
+    // 파일 버퍼를 리사이즈하여 이미지 데이터 생성
+    const resizedImage = await resizeImage(req.file.buffer, 224, 224);
+    const castedImage = resizedImage.cast('float32');
+    const expandedImage = castedImage.expandDims(0);
+    const normalizedImage = expandedImage.div(255);
+
+    // 모델 로드 및 예측
     const model = await tf.loadGraphModel('file://./tf_js/model.json');
-    const imageBuffer = await resizeImage(req.file.buffer, 224, 224);
-    const prediction = await model.predict(tf.tensor(imageBuffer)).data();
+    const prediction = await model.predict(normalizedImage).data();
     const result = prediction[0] > 0.5 ? 'large' : 'medium';
 
     console.log(`Prediction result: ${result}`);
