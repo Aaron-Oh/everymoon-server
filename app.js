@@ -35,6 +35,7 @@ app.post('/predict', upload.single('image'), async (req, res) => {
     const prediction = await model.predict(expandedImg).data();
     const result = prediction[0] > 0.5 ? 'large' : 'medium';
 
+    console.log(`Prediction result: ${result}`);
     res.json({ result });
   } catch (error) {
     console.error(error);
