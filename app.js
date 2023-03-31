@@ -14,6 +14,15 @@ app.get('/', (req, res) => {
   res.send('Hello from TensorFlow.js Node.js server');
 });
 
+function loadImage(buffer) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = buffer;
+  });
+}
+
 async function resizeImage(buffer, width, height) {
   const image = await loadImage(buffer);
   console.log(`img is well loaded`);
