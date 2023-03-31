@@ -16,9 +16,13 @@ app.get('/', (req, res) => {
 
 async function resizeImage(buffer, width, height) {
   const image = await loadImage(buffer);
+  console.log(`img is well loaded`);
   const canvas = createCanvas(width, height);
+  console.log(`canvas is successfully assigned`);
   const ctx = canvas.getContext('2d');
+  console.log(`ctx is well defined`);
   ctx.drawImage(image, 0, 0, width, height);
+  console.log(`draw img is well defined`);
   return canvas.toBuffer('image/jpeg');
 }
 
@@ -29,15 +33,15 @@ app.post('/predict', upload.single('image'), async (req, res) => {
     const model = await tf.loadGraphModel('file://./tf_js/model.json');
     console.log(`Model is well defined`);
     const imageBuffer = await resizeImage(req.file.buffer, 224, 224);
-    //console.log(`imageBuffer is well defined`);
+    console.log(`imageBuffer is well defined`);
     const decodedImage = tf.node.decodeImage(imageBuffer);
-    //console.log(`decodedImage is well defined`);
+    console.log(`decodedImage is well defined`);
     const castedImg = decodedImage.cast('float32');
-    //console.log(`castedImg is well defined`);
+    console.log(`castedImg is well defined`);
     const expandedImg = castedImg.expandDims(0);
-    //console.log(`expandedImg is well defined`);
+    console.log(`expandedImg is well defined`);
     const prediction = await model.predict(expandedImg).data();
-    //console.log(`prediction is well defined`);
+    console.log(`prediction is well defined`);
     const result = prediction[0] > 0.5 ? 'large' : 'medium';
 
     console.log(`Prediction result: ${result}`);
