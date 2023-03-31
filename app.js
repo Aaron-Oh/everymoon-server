@@ -2,6 +2,7 @@ const express = require('express');
 const tf = require('@tensorflow/tfjs-node');
 const cors = require('cors');
 const multer = require('multer');
+const sharp = require('sharp');
 
 const app = express();
 app.use(cors());
