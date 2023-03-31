@@ -15,7 +15,7 @@ app.get('/', (req, res) => {
 
 app.post('/predict', upload.single('image'), async (req, res) => {
   try {
-    const model = await tf.loadLayersModel('file://./tf_js/model.json');
+    const model = await tf.loadGraphModel('file://./tf_js/model.json');
 
     const imageBuffer = req.file.buffer;
     const decodedImage = tf.node.decodeImage(imageBuffer);
