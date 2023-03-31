@@ -3,7 +3,7 @@ const tf = require('@tensorflow/tfjs-node');
 const cors = require('cors');
 const multer = require('multer');
 const upload = multer({ dest: 'uploads/' });
-const jpeg = require('jpeg-js');
+const Jimp = require('jimp');
 
 const app = express();
 app.use(cors());
@@ -15,15 +15,9 @@ app.get('/', (req, res) => {
 });
 
 async function resizeImage(buffer, width, height) {
-  const rawImageData = jpeg.decode(buffer);
-  console.log(`1`);
-  const pixels = tf.tensor3d(rawImageData.data, [rawImageData.height, rawImageData.width, 4], 'int32');
-  console.log(`2`);
-  const image = tf.image.resizeBilinear(pixels, [width, height]);
-  console.log(`3`);
-  const bufferResult = await tf.node.encodeJpeg(image);
-  console.log(`4`);
-  return bufferResult;
+  const image = await Jimp.read(buffer);
+  image.resize(width, height);
+  return await image.getBufferAsync(Jimp.MIME_JPEG);
 }
 
 app.post('/predict', upload.single('image'), async (req, res) => {
