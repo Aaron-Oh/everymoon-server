@@ -17,7 +17,7 @@ app.get('/', (req, res) => {
 async function resizeImage(buffer, width, height) {
   const image = await Jimp.read(buffer);
   image.resize(width, height);
-  return await image.getBufferAsync(Jimp.MIME_JPEG);
+  return image.bitmap.data;
 }
 
 app.post('/predict', upload.single('image'), async (req, res) => {
@@ -25,17 +25,11 @@ app.post('/predict', upload.single('image'), async (req, res) => {
     // 요청에 대한 정보를 로그로 출력
     console.log('Received POST request at /predict with image:', req.file.originalname);
     const model = await tf.loadGraphModel('file://./tf_js/model.json');
-    console.log(`Model is well defined`);
     const imageBuffer = await resizeImage(req.file.buffer, 224, 224);
-    console.log(`imageBuffer is well defined`);
     const decodedImage = tf.node.decodeImage(imageBuffer);
-    console.log(`decodedImage is well defined`);
     const castedImg = decodedImage.cast('float32');
-    console.log(`castedImg is well defined`);
     const expandedImg = castedImg.expandDims(0);
-    console.log(`expandedImg is well defined`);
     const prediction = await model.predict(expandedImg).data();
-    console.log(`prediction is well defined`);
     const result = prediction[0] > 0.5 ? 'large' : 'medium';
 
     console.log(`Prediction result: ${result}`);
