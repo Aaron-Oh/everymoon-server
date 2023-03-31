@@ -21,7 +21,10 @@ app.post('/predict', upload.single('image'), async (req, res) => {
 
     const imageBuffer = req.file.buffer;
     const decodedImage = tf.node.decodeImage(imageBuffer);
-    const castedImg = decodedImage.cast('float32');
+    const resizedImage = await sharp(decodedImage.data)
+    .resize(224, 224)
+    .toBuffer();
+    const castedImg = decodedImage(resizedImage).cast('float32');
     const expandedImg = castedImg.expandDims(0);
     const prediction = await model.predict(expandedImg).data();
     const result = prediction[0] > 0.5 ? 'large' : 'medium';
