@@ -4,6 +4,7 @@ const cors = require('cors');
 const multer = require('multer');
 const upload = multer({ dest: 'uploads/' });
 const jpeg = require('jpeg-js');
+const { createCanvas, loadImage } = require('canvas');
 
 const app = express();
 app.use(cors());
@@ -15,28 +16,24 @@ app.get('/', (req, res) => {
 });
 
 async function resizeImage(buffer, width, height) {
-  const pixels = jpeg.decode(buffer);
-  const canvas = tf.browser.fromPixels(pixels);
-  const resizedCanvas = tf.image.resizeBilinear(canvas, [width, height]);
-  return resizedCanvas;
+  const imgData = jpeg.decode(buffer);
+  const canvas = createCanvas(width, height);
+  const ctx = canvas.getContext('2d');
+  const img = await loadImage(imgData.data);
+  ctx.drawImage(img, 0, 0, width, height);
+  return canvas.toBuffer('image/jpeg');
 }
 
 app.post('/predict', upload.single('image'), async (req, res) => {
   try {
-    // 요청에 대한 정보를 로그로 출력
     console.log('Received POST request at /predict with image:', req.file.originalname);
     const model = await tf.loadGraphModel('file://./tf_js/model.json');
-    console.log(`Model is well defined`);
-    const resizedCanvas = await resizeImage(req.file.buffer, 224, 224);
-    console.log(`resizedCanvas is well defined`);
-    const castedImg = resizedCanvas.cast('float32').div(tf.scalar(255));
-    console.log(`castedImg is well defined`);
+    const imageBuffer = await resizeImage(req.file.buffer, 224, 224);
+    const decodedImage = tf.node.decodeImage(imageBuffer);
+    const castedImg = decodedImage.cast('float32');
     const expandedImg = castedImg.expandDims(0);
-    console.log(`expandedImg is well defined`);
     const prediction = await model.predict(expandedImg).data();
-    console.log(`prediction is well defined`);
     const result = prediction[0] > 0.5 ? 'large' : 'medium';
-
     console.log(`Prediction result: ${result}`);
     res.json({ result });
   } catch (error) {
