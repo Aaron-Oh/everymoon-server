@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "528004938944",
+    "firebase_url": "https://everymoon-725c7-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "everymoon-725c7",
+    "storage_bucket": "everymoon-725c7.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:528004938944:android:ce54d442e4da91ecc84125",
+        "android_client_info": {
+          "package_name": "com.anonymous.everymoon"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "528004938944-9na8ukcuotveagmeiq24ph2r8g7jlu6s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAq4tVVu8WRsdCCLepSCUEoYqqt8dEOI5o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "528004938944-5aseemv9qfqma73rfm5sdgcc975lfq8i.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "528004938944-v0v8qkb5b8eslqp4adaq2bidl1oa0f4r.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "jay.everymoon"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
