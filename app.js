@@ -3,7 +3,6 @@ const tf = require('@tensorflow/tfjs-node');
 const cors = require('cors');
 const multer = require('multer');
 const upload = multer({ dest: 'uploads/' });
-const Jimp = require('jimp');
 
 const app = express();
 app.use(cors());
@@ -15,21 +14,22 @@ app.get('/', (req, res) => {
 });
 
 async function resizeImage(buffer, width, height) {
-  const image = await Jimp.read(buffer);
-  image.resize(width, height);
-  return image.bitmap.data;
+  const decodedImage = tf.node.decodeImage(buffer);
+  const resizedImage = tf.image.resizeBilinear(decodedImage, [width, height]);
+  const castedImg = resizedImage.cast('float32');
+  const expandedImg = castedImg.expandDims(0);
+  const imgData = await expandedImg.data();
+  return Buffer.from(imgData);
 }
 
 app.post('/predict', upload.single('image'), async (req, res) => {
   try {
     // 요청에 대한 정보를 로그로 출력
     console.log('Received POST request at /predict with image:', req.file.originalname);
+
     const model = await tf.loadGraphModel('file://./tf_js/model.json');
     const imageBuffer = await resizeImage(req.file.buffer, 224, 224);
-    const decodedImage = tf.node.decodeImage(imageBuffer);
-    const castedImg = decodedImage.cast('float32');
-    const expandedImg = castedImg.expandDims(0);
-    const prediction = await model.predict(expandedImg).data();
+    const prediction = await model.predict(tf.tensor(imageBuffer)).data();
     const result = prediction[0] > 0.5 ? 'large' : 'medium';
 
     console.log(`Prediction result: ${result}`);
