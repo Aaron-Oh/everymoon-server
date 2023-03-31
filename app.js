@@ -15,35 +15,34 @@ app.get('/', (req, res) => {
 });
 
 async function resizeImage(buffer, width, height) {
-  try {
-    const image = tf.node.decodeImage(buffer);
-    const resizedImage = tf.image.resizeBilinear(image, [width, height]);
-    const castedImg = resizedImage.cast('float32');
-    const expandedImg = castedImg.expandDims(0);
-    const prediction = await model.predict(expandedImg).data();
-    const result = prediction[0] > 0.5 ? 'large' : 'medium';
-    return result;
-  } catch (error) {
-    console.error(error);
-    throw new Error('Invalid image file');
-  }
+  const rawImageData = jpeg.decode(buffer);
+  console.log(`1`);
+  const pixels = tf.tensor3d(rawImageData.data, [rawImageData.height, rawImageData.width, 4], 'int32');
+  console.log(`2`);
+  const image = tf.image.resizeBilinear(pixels, [width, height]);
+  console.log(`3`);
+  const bufferResult = await tf.node.encodeJpeg(image);
+  console.log(`4`);
+  return bufferResult;
 }
 
 app.post('/predict', upload.single('image'), async (req, res) => {
   try {
+    // 요청에 대한 정보를 로그로 출력
     console.log('Received POST request at /predict with image:', req.file.originalname);
-
     const model = await tf.loadGraphModel('file://./tf_js/model.json');
-
-    const imageBuffer = req.file.buffer;
-
-    // Check if image is valid JPEG image
-    const decodedImage = jpeg.decode(imageBuffer, { toRaw: true });
-    if (decodedImage.data.byteLength === 0) {
-      throw new Error('Invalid image file');
-    }
-
-    const result = await resizeImage(imageBuffer, 224, 224);
+    console.log(`Model is well defined`);
+    const imageBuffer = await resizeImage(req.file.buffer, 224, 224);
+    console.log(`imageBuffer is well defined`);
+    const decodedImage = tf.node.decodeImage(imageBuffer);
+    console.log(`decodedImage is well defined`);
+    const castedImg = decodedImage.cast('float32');
+    console.log(`castedImg is well defined`);
+    const expandedImg = castedImg.expandDims(0);
+    console.log(`expandedImg is well defined`);
+    const prediction = await model.predict(expandedImg).data();
+    console.log(`prediction is well defined`);
+    const result = prediction[0] > 0.5 ? 'large' : 'medium';
 
     console.log(`Prediction result: ${result}`);
     res.json({ result });
