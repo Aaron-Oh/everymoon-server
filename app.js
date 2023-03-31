@@ -2,10 +2,12 @@ const express = require('express');
 const tf = require('@tensorflow/tfjs-node');
 const cors = require('cors');
 const multer = require('multer');
-const upload = multer({ dest: 'uploads/' });
 
 const app = express();
 app.use(cors());
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 const port = process.env.PORT || 8080;
 
