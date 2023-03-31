@@ -19,12 +19,18 @@ app.post('/predict', upload.single('image'), async (req, res) => {
   try {
     const model = await tf.loadGraphModel('file://./tf_js/model.json');
 
-    const imageBuffer = req.file.buffer;
+    const imageBuffer = await sharp(req.file.buffer)
+      .resize({
+        width: 224,
+        height: 224,
+        fit: 'fill',
+        position: 'center',
+      })
+      .jpeg()
+      .toBuffer();
+
     const decodedImage = tf.node.decodeImage(imageBuffer);
-    const resizedImage = await sharp(decodedImage.data)
-    .resize(224, 224)
-    .toBuffer();
-    const castedImg = decodedImage(resizedImage).cast('float32');
+    const castedImg = decodedImage.cast('float32');
     const expandedImg = castedImg.expandDims(0);
     const prediction = await model.predict(expandedImg).data();
     const result = prediction[0] > 0.5 ? 'large' : 'medium';
